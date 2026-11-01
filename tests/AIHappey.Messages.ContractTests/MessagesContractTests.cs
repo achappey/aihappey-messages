@@ -142,10 +142,126 @@ public sealed class MessagesContractTests
         Assert.Equal("fast", root.GetProperty("usage").GetProperty("speed").GetString());
         Assert.Equal(2, root.GetProperty("usage").GetProperty("output_tokens_details")
             .GetProperty("thinking_tokens").GetInt32());
+        Assert.Equal("prefix_mismatch", root.GetProperty("diagnostics")
+            .GetProperty("cache_miss_reason").GetString());
         Assert.Equal(3, root.GetProperty("usage").GetProperty("cache_creation")
             .GetProperty("future_cache_metric").GetInt32());
         Assert.Equal("preserved", root.GetProperty("content")[1].GetProperty("future_tool_field").GetString());
         Assert.Equal("preserved", root.GetProperty("future_response_field").GetString());
+    }
+
+    [Fact]
+    public void Structured_cache_diagnostics_preserve_details_and_explicit_null_request_id()
+    {
+        const string responseJson = """
+            {
+              "diagnostics": {
+                "previous_message_id": "msg_previous",
+                "cache_miss_reason": {
+                  "type": "messages_changed",
+                  "cache_missed_input_tokens": 128,
+                  "future_detail": true
+                }
+              }
+            }
+            """;
+
+        var response = JsonSerializer.Deserialize<MessagesResponse>(
+            responseJson, MessagesJson.Default)!;
+        var diagnostics = response.Diagnostics!;
+        Assert.Equal("messages_changed", diagnostics.CacheMissReason);
+        Assert.Equal(128, diagnostics.CacheMissReasonDetails!.CacheMissedInputTokens);
+
+        using var responseRoundTrip = JsonDocument.Parse(
+            JsonSerializer.Serialize(response, MessagesJson.Default));
+        var responseDiagnostics = responseRoundTrip.RootElement.GetProperty("diagnostics");
+        Assert.Equal("messages_changed", responseDiagnostics.GetProperty("cache_miss_reason")
+            .GetProperty("type").GetString());
+        Assert.True(responseDiagnostics.GetProperty("cache_miss_reason")
+            .GetProperty("future_detail").GetBoolean());
+
+        var pendingResponse = JsonSerializer.Deserialize<MessagesResponse>(
+            """{"diagnostics":{"cache_miss_reason":null}}""", MessagesJson.Default)!;
+        using var pendingRoundTrip = JsonDocument.Parse(
+            JsonSerializer.Serialize(pendingResponse, MessagesJson.Default));
+        Assert.Equal(JsonValueKind.Null, pendingRoundTrip.RootElement.GetProperty("diagnostics")
+            .GetProperty("cache_miss_reason").ValueKind);
+
+        var request = new MessagesRequest
+        {
+            Model = "claude-sonnet-4-5",
+            MaxTokens = 100,
+            Messages = [],
+            Diagnostics = new MessagesDiagnostics { PreviousMessageId = null }
+        };
+
+        using var requestJson = JsonDocument.Parse(
+            JsonSerializer.Serialize(request, MessagesJson.Default));
+        Assert.True(requestJson.RootElement.GetProperty("diagnostics")
+            .TryGetProperty("previous_message_id", out var previousMessageId));
+        Assert.Equal(JsonValueKind.Null, previousMessageId.ValueKind);
+    }
+
+    [Fact]
+    public void File_sources_and_api_errors_roundtrip_known_and_unknown_fields()
+    {
+        const string responseJson = """
+            {
+              "content": [{
+                "type": "document",
+                "source": {
+                  "type": "file",
+                  "file_id": "file_123",
+                  "future_source_field": "preserved"
+                }
+              }]
+            }
+            """;
+
+        var response = JsonSerializer.Deserialize<MessagesResponse>(
+            responseJson, MessagesJson.Default)!;
+        Assert.Equal("file_123", response.Content[0].Source!.FileId);
+
+        using var responseRoundTrip = JsonDocument.Parse(
+            JsonSerializer.Serialize(response, MessagesJson.Default));
+        var source = responseRoundTrip.RootElement.GetProperty("content")[0]
+            .GetProperty("source");
+        Assert.Equal("file_123", source.GetProperty("file_id").GetString());
+        Assert.Equal("preserved", source.GetProperty("future_source_field").GetString());
+
+        const string errorJson = """
+            {
+              "type": "error",
+              "error": {
+                "type": "future_error_type",
+                "message": "Request failed",
+                "future_error_detail": { "retryable": true }
+              },
+              "request_id": "req_123",
+              "future_envelope_field": 7
+            }
+            """;
+
+        var error = JsonSerializer.Deserialize<MessagesErrorResponse>(
+            errorJson, MessagesJson.Default)!;
+        Assert.Equal("future_error_type", error.Error!.Type);
+        Assert.Equal("req_123", error.RequestId);
+
+        using var errorRoundTrip = JsonDocument.Parse(
+            JsonSerializer.Serialize(error, MessagesJson.Default));
+        var errorRoot = errorRoundTrip.RootElement;
+        Assert.Equal("req_123", errorRoot.GetProperty("request_id").GetString());
+        Assert.True(errorRoot.GetProperty("error").GetProperty("future_error_detail")
+            .GetProperty("retryable").GetBoolean());
+        Assert.Equal(7, errorRoot.GetProperty("future_envelope_field").GetInt32());
+
+        var errorWithoutRequestId = JsonSerializer.Deserialize<MessagesErrorResponse>(
+            """{"type":"error","error":{"type":"api_error","message":"Unavailable"},"request_id":null}""",
+            MessagesJson.Default)!;
+        using var errorWithoutRequestIdRoundTrip = JsonDocument.Parse(
+            JsonSerializer.Serialize(errorWithoutRequestId, MessagesJson.Default));
+        Assert.Equal(JsonValueKind.Null, errorWithoutRequestIdRoundTrip.RootElement
+            .GetProperty("request_id").ValueKind);
     }
 
     [Fact]

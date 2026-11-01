@@ -297,6 +297,10 @@ public sealed class MessageSource
     [JsonPropertyName("type")]
     public required string Type { get; set; }
 
+    [JsonPropertyName("file_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? FileId { get; set; }
+
     [JsonPropertyName("data")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Data { get; set; }

@@ -56,6 +56,34 @@ public sealed class MessagesResponse
     public Dictionary<string, JsonElement>? Metadata { get; set; }
 }
 
+public sealed class MessagesErrorResponse
+{
+    [JsonPropertyName("type")]
+    public required string Type { get; set; }
+
+    [JsonPropertyName("error")]
+    public required MessagesApiError Error { get; set; }
+
+    [JsonPropertyName("request_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public required string? RequestId { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+public sealed class MessagesApiError
+{
+    [JsonPropertyName("type")]
+    public required string Type { get; set; }
+
+    [JsonPropertyName("message")]
+    public required string Message { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
 public sealed class MessagesContainer
 {
     [JsonPropertyName("id")]
@@ -162,15 +190,70 @@ public sealed class MessagesServerToolUsage
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
 }
 
+[JsonConverter(typeof(MessagesDiagnosticsJsonConverter))]
 public sealed class MessagesDiagnostics
 {
-    [JsonPropertyName("previous_message_id")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? PreviousMessageId { get; set; }
+    private string? _previousMessageId;
+    private string? _cacheMissReason;
+    private MessagesCacheMissReason? _cacheMissReasonDetails;
+    private JsonElement? _cacheMissReasonRaw;
 
-    [JsonPropertyName("cache_miss_reason")]
+    public string? PreviousMessageId
+    {
+        get => _previousMessageId;
+        set
+        {
+            _previousMessageId = value;
+            HasPreviousMessageId = true;
+        }
+    }
+
+    public string? CacheMissReason
+    {
+        get => _cacheMissReason;
+        set
+        {
+            _cacheMissReason = value;
+            HasCacheMissReason = true;
+        }
+    }
+
+    public MessagesCacheMissReason? CacheMissReasonDetails
+    {
+        get => _cacheMissReasonDetails;
+        set
+        {
+            _cacheMissReasonDetails = value;
+            HasCacheMissReason = true;
+        }
+    }
+
+    public JsonElement? CacheMissReasonRaw
+    {
+        get => _cacheMissReasonRaw;
+        set
+        {
+            _cacheMissReasonRaw = value;
+            HasCacheMissReason = true;
+        }
+    }
+
+    internal bool HasPreviousMessageId { get; private set; }
+
+    internal bool HasCacheMissReason { get; private set; }
+
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+public sealed class MessagesCacheMissReason
+{
+    [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? CacheMissReason { get; set; }
+    public string? Type { get; set; }
+
+    [JsonPropertyName("cache_missed_input_tokens")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CacheMissedInputTokens { get; set; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
