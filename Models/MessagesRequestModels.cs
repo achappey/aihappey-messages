@@ -6,13 +6,13 @@ namespace AIHappey.Messages;
 public sealed class MessagesRequest
 {
     [JsonPropertyName("model")]
-    public string? Model { get; set; }
+    public required string Model { get; set; }
 
     [JsonPropertyName("max_tokens")]
-    public int? MaxTokens { get; set; }
+    public required int MaxTokens { get; set; }
 
     [JsonPropertyName("messages")]
-    public List<MessageParam> Messages { get; set; } = [];
+    public required List<MessageParam> Messages { get; set; }
 
     [JsonPropertyName("cache_control")]
     public CacheControlEphemeral? CacheControl { get; set; }
@@ -57,14 +57,14 @@ public sealed class MessagesRequest
     public MessageToolChoice? ToolChoice { get; set; }
 
     [JsonPropertyName("context_management")]
-    public object? ContextManagement { get; set; }
+    public MessagesContextManagementConfig? ContextManagement { get; set; }
 
     [JsonPropertyName("diagnostics")]
     public MessagesDiagnostics? Diagnostics { get; set; }
 
     [JsonPropertyName("compaction")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public object? Compaction { get; set; }
+    public MessagesCompactionConfig? Compaction { get; set; }
 
     [JsonPropertyName("tools")]
     public List<MessageToolDefinition>? Tools { get; set; }
@@ -83,10 +83,10 @@ public sealed class MessagesRequest
 public sealed class MessageParam
 {
     [JsonPropertyName("role")]
-    public string Role { get; set; } = "user";
+    public required string Role { get; set; }
 
     [JsonPropertyName("content")]
-    public MessagesContent Content { get; set; } = new(string.Empty);
+    public required MessagesContent Content { get; set; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
@@ -170,6 +170,57 @@ public sealed class MessagesThinkingConfig
 
     [JsonPropertyName("display")]
     public string? Display { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+public sealed class MessagesCompactionConfig
+{
+    [JsonPropertyName("type")]
+    public required string Type { get; set; }
+
+    [JsonPropertyName("instructions")]
+    public string? Instructions { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+public sealed class MessagesContextManagementConfig
+{
+    [JsonPropertyName("edits")]
+    public List<MessagesContextManagementEdit>? Edits { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
+}
+
+public sealed class MessagesContextManagementEdit
+{
+    [JsonPropertyName("type")]
+    public required string Type { get; set; }
+
+    [JsonPropertyName("trigger")]
+    public JsonElement? Trigger { get; set; }
+
+    [JsonPropertyName("keep")]
+    public JsonElement? Keep { get; set; }
+
+    [JsonPropertyName("clear_at_least")]
+    public JsonElement? ClearAtLeast { get; set; }
+
+    [JsonPropertyName("clear_tool_inputs")]
+    public JsonElement? ClearToolInputs { get; set; }
+
+    [JsonPropertyName("exclude_tools")]
+    public List<string>? ExcludeTools { get; set; }
+
+    [JsonPropertyName("instructions")]
+    public string? Instructions { get; set; }
+
+    [JsonPropertyName("pause_after_compaction")]
+    public bool? PauseAfterCompaction { get; set; }
 
     [JsonExtensionData]
     public Dictionary<string, JsonElement>? AdditionalProperties { get; set; }
