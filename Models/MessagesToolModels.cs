@@ -6,7 +6,7 @@ namespace AIHappey.Messages;
 public sealed class MessageCaller
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
+    public required string Type { get; set; }
 
     [JsonPropertyName("tool_id")]
     public string? ToolId { get; set; }
@@ -19,6 +19,10 @@ public sealed class MessageToolChoice
 {
     [JsonPropertyName("type")]
     public string Type { get; set; } = "auto";
+
+    [JsonPropertyName("name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Name { get; set; }
 
     [JsonPropertyName("disable_parallel_tool_use")]
     public bool? DisableParallelToolUse { get; set; }

@@ -6,7 +6,7 @@ namespace AIHappey.Messages;
 public sealed class MessageContentBlock
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
+    public required string Type { get; set; }
 
     [JsonPropertyName("text")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -59,6 +59,10 @@ public sealed class MessageContentBlock
     [JsonPropertyName("caller")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public MessageCaller? Caller { get; set; }
+
+    [JsonPropertyName("toolset_name")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ToolsetName { get; set; }
 
     [JsonPropertyName("tool_use_id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -222,7 +226,7 @@ public sealed class MessageContentBlock
 public sealed class MessageCitation
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
+    public required string Type { get; set; }
 
     [JsonPropertyName("cited_text")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -291,7 +295,7 @@ public sealed class MessageCitation
 public sealed class MessageSource
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
+    public required string Type { get; set; }
 
     [JsonPropertyName("data")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

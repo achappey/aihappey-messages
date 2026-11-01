@@ -6,7 +6,7 @@ namespace AIHappey.Messages;
 public sealed class MessageStreamPart
 {
     [JsonPropertyName("type")]
-    public string Type { get; set; } = default!;
+    public required string Type { get; set; }
 
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -78,6 +78,10 @@ public sealed class MessageStreamDelta
     [JsonPropertyName("stop_sequence")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? StopSequence { get; set; }
+
+    [JsonPropertyName("stop_details")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public MessagesStopDetails? StopDetails { get; set; }
 
     [JsonPropertyName("container")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
